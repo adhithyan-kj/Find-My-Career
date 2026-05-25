@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# FindMyCareer 🚀
 
-## Getting Started
+An AI-powered career guidance platform designed for Plus Two (Higher Secondary) students to discover the best career paths based on their interests, strengths, personality, goals, and future opportunities.
 
-First, run the development server:
+## 🌟 Features
+
+### 🤖 AI Career Discovery
+- Conversational AI-based career guidance
+- Personalized questions instead of boring forms
+- Adaptive AI questioning system
+- Interest and personality analysis
+
+### 🎯 Career Match Engine
+- AI-generated career recommendations
+- Match percentage scoring
+- Future scope analysis
+- Salary insights
+- Work-life balance indicators
+- AI replacement risk estimation
+
+### 📚 Study Roadmaps
+- Suggested degrees and courses
+- Entrance exam guidance
+- Skill development paths
+- Estimated study duration
+- Daily study recommendations
+
+### ⚡ Career Comparison
+Compare careers side-by-side based on:
+- Salary
+- Future demand
+- Difficulty
+- AI safety
+- Creativity
+- Remote work opportunities
+- Growth potential
+
+### 🧠 AI Mentor Chatbot
+Students can ask:
+- “Can I become a game developer?”
+- “Is AI engineering good for me?”
+- “Which careers are future-proof?”
+
+Powered using Groq API.
+
+### 🌍 Additional Features
+- English + Malayalam support
+- Dark/Light mode
+- Voice input support
+- Skill gap analyzer
+- Scholarship suggestions
+- Parent dashboard
+- Achievement badges & streaks
+- Personalized dashboard
+
+---
+
+# 🛠 Tech Stack
+
+## Frontend
+- Next.js
+- React
+- Tailwind CSS
+- Framer Motion
+
+## Backend
+- Firebase / Supabase
+
+## AI
+- Groq API
+
+## Authentication
+- Google Authentication
+- Email Login
+
+## Deployment
+- Vercel
+
+---
+
+# 📱 Mobile First Design
+
+The entire platform is designed with a mobile-first approach for the best experience on smartphones and tablets.
+
+---
+
+# 🎨 UI/UX Design
+
+- Futuristic AI-inspired interface
+- Glassmorphism effects
+- Smooth animations
+- Responsive layouts
+- Interactive dashboards
+- Modern gradients
+
+---
+
+# 🚀 Installation
+
+## Clone Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+git clone https://github.com/your-username/findmycareer.git
