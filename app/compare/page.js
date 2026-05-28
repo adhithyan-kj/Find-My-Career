@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   ArrowLeftRight,
   ChevronDown,
@@ -10,11 +10,29 @@ import {
   MapPin,
   Clock,
   ShieldCheck,
-  Award
+  Award,
+  DollarSign,
+  Zap,
+  TrendingUp,
+  Brain
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import { useAppState } from "../../context/AppState";
+
+// Client-side charting imports for SSR safety
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Legend
+} from "recharts";
 
 const COMPARABLE_CAREERS = [
   {
@@ -23,13 +41,20 @@ const COMPARABLE_CAREERS = [
     salaryIndia: "₹10L - ₹28L / yr",
     salaryGlobal: "$110k - $240k / yr",
     aiSafety: "94% AI-Proof",
+    aiSafetyVal: 94,
     demand: "Critical (+60% Growth)",
+    demandVal: 80,
     studyYears: 4,
     exams: "NEET, JEE",
     stress: "High (High focus needed)",
+    stressVal: 85,
     commute: "Hybrid / Lab visits",
     vibe: "Research-driven, intellectual",
-    difficulty: "High"
+    difficulty: "High",
+    difficultyVal: 85,
+    creativityVal: 75,
+    globalOpportunityVal: 85,
+    competitionVal: 90
   },
   {
     id: "quantum-bioinformatics",
@@ -37,13 +62,20 @@ const COMPARABLE_CAREERS = [
     salaryIndia: "₹15L - ₹42L / yr",
     salaryGlobal: "$140k - $310k / yr",
     aiSafety: "98% AI-Proof",
+    aiSafetyVal: 98,
     demand: "Futuristic (+120% Growth)",
+    demandVal: 95,
     studyYears: 5,
     exams: "JEE Advanced, JAM",
     stress: "Low (High stamina needed)",
+    stressVal: 40,
     commute: "Highly flexible / Remote",
     vibe: "Scientific pioneer, global traveler",
-    difficulty: "Very High"
+    difficulty: "Very High",
+    difficultyVal: 95,
+    creativityVal: 80,
+    globalOpportunityVal: 95,
+    competitionVal: 80
   },
   {
     id: "ai-engineer",
@@ -51,13 +83,20 @@ const COMPARABLE_CAREERS = [
     salaryIndia: "₹12L - ₹38L / yr",
     salaryGlobal: "$130k - $290k / yr",
     aiSafety: "95% AI-Proof",
+    aiSafetyVal: 95,
     demand: "Explosive (+140% Growth)",
+    demandVal: 99,
     studyYears: 4,
     exams: "JEE, State Engineering",
     stress: "Moderate (Fast updates)",
+    stressVal: 65,
     commute: "Hybrid / Flexible",
     vibe: "Fast-paced, high impact",
-    difficulty: "Moderate to High"
+    difficulty: "Moderate to High",
+    difficultyVal: 75,
+    creativityVal: 85,
+    globalOpportunityVal: 90,
+    competitionVal: 95
   },
   {
     id: "cybersecurity-guardian",
@@ -65,13 +104,20 @@ const COMPARABLE_CAREERS = [
     salaryIndia: "₹9L - ₹28L / yr",
     salaryGlobal: "$115k - $250k / yr",
     aiSafety: "96% AI-Proof",
+    aiSafetyVal: 96,
     demand: "Very High (+95% Growth)",
+    demandVal: 90,
     studyYears: 4,
     exams: "JEE, CEH Certs",
     stress: "High stakes (varying stress)",
+    stressVal: 75,
     commute: "Hybrid / On-call rotation",
     vibe: "Heroic shield, highly logical",
-    difficulty: "High"
+    difficulty: "High",
+    difficultyVal: 80,
+    creativityVal: 70,
+    globalOpportunityVal: 85,
+    competitionVal: 85
   },
   {
     id: "fintech-analyst",
@@ -79,13 +125,20 @@ const COMPARABLE_CAREERS = [
     salaryIndia: "₹8L - ₹24L / yr",
     salaryGlobal: "$105k - $210k / yr",
     aiSafety: "89% AI-Proof",
+    aiSafetyVal: 89,
     demand: "Critical (+85% Growth)",
+    demandVal: 85,
     studyYears: 3,
     exams: "IPMAT, CAT, CFA 1",
     stress: "Moderate to high (24/7 markets)",
+    stressVal: 70,
     commute: "Office-centric",
     vibe: "Corporate, financial circles",
-    difficulty: "Moderate"
+    difficulty: "Moderate",
+    difficultyVal: 65,
+    creativityVal: 65,
+    globalOpportunityVal: 80,
+    competitionVal: 85
   },
   {
     id: "product-manager",
@@ -93,13 +146,20 @@ const COMPARABLE_CAREERS = [
     salaryIndia: "₹10L - ₹32L / yr",
     salaryGlobal: "$120k - $260k / yr",
     aiSafety: "92% AI-Proof",
+    aiSafetyVal: 92,
     demand: "Very High (+70% Growth)",
+    demandVal: 75,
     studyYears: 3,
     exams: "NPAT, Christ, CAT",
     stress: "High coordination stress",
+    stressVal: 80,
     commute: "Hybrid / High remote",
     vibe: "Collaborative, social leader",
-    difficulty: "Moderate"
+    difficulty: "Moderate",
+    difficultyVal: 60,
+    creativityVal: 80,
+    globalOpportunityVal: 85,
+    competitionVal: 75
   },
   {
     id: "holographic-designer",
@@ -107,13 +167,20 @@ const COMPARABLE_CAREERS = [
     salaryIndia: "₹7L - ₹22L / yr",
     salaryGlobal: "$95k - $210k / yr",
     aiSafety: "96% AI-Proof",
+    aiSafetyVal: 96,
     demand: "Critical (+110% Growth)",
+    demandVal: 92,
     studyYears: 4,
     exams: "UCEED, NID, NIFT",
     stress: "Low admin, high creative pressure",
+    stressVal: 50,
     commute: "Fully remote / Hybrid",
     vibe: "Creative freedom, high-tech lofts",
-    difficulty: "Moderate"
+    difficulty: "Moderate",
+    difficultyVal: 60,
+    creativityVal: 95,
+    globalOpportunityVal: 90,
+    competitionVal: 70
   },
   {
     id: "ai-ethical-advisor",
@@ -121,19 +188,32 @@ const COMPARABLE_CAREERS = [
     salaryIndia: "₹8L - ₹25L / yr",
     salaryGlobal: "$110k - $230k / yr",
     aiSafety: "99% AI-Proof",
+    aiSafetyVal: 99,
     demand: "Futuristic (+130% Growth)",
+    demandVal: 96,
     studyYears: 3,
     exams: "CUET, State Humanities",
     stress: "Low immediate stress, high accountability",
+    stressVal: 45,
     commute: "Hybrid / High flexibility",
     vibe: "Intellectual, socially responsible",
-    difficulty: "Moderate"
+    difficulty: "Moderate",
+    difficultyVal: 55,
+    creativityVal: 90,
+    globalOpportunityVal: 80,
+    competitionVal: 65
   }
 ];
 
 export default function CareerCompare() {
+  const { t } = useAppState();
   const [careerA, setCareerA] = useState(COMPARABLE_CAREERS[2]); // AI Engineer default
   const [careerB, setCareerB] = useState(COMPARABLE_CAREERS[4]); // Fintech Analyst default
+  const [ssrMounted, setSsrMounted] = useState(false);
+
+  useEffect(() => {
+    setSsrMounted(true);
+  }, []);
 
   const handleSelectA = (id) => {
     const found = COMPARABLE_CAREERS.find(c => c.id === id);
@@ -143,6 +223,30 @@ export default function CareerCompare() {
   const handleSelectB = (id) => {
     const found = COMPARABLE_CAREERS.find(c => c.id === id);
     if (found) setCareerB(found);
+  };
+
+  // Dynamic salary comparing data
+  const getSalaryProgressionData = () => {
+    const startA = parseInt(careerA.salaryIndia.match(/\d+/)?.[0] || "8");
+    const peakA = parseInt(careerA.salaryIndia.split("-")?.[1]?.match(/\d+/)?.[0] || "28");
+    const startB = parseInt(careerB.salaryIndia.match(/\d+/)?.[0] || "8");
+    const peakB = parseInt(careerB.salaryIndia.split("-")?.[1]?.match(/\d+/)?.[0] || "28");
+
+    return [
+      { name: "Starting Salary (India)", [careerA.name]: startA, [careerB.name]: startB },
+      { name: "Expert Peak Salary (India)", [careerA.name]: peakA, [careerB.name]: peakB }
+    ];
+  };
+
+  // Dynamic parameter mapping scores
+  const getComparativeMetricData = () => {
+    return [
+      { subject: "AI-Safety", A: careerA.aiSafetyVal, B: careerB.aiSafetyVal },
+      { subject: "Market Demand", A: careerA.demandVal, B: careerB.demandVal },
+      { subject: "Work Stress", A: careerA.stressVal, B: careerB.stressVal },
+      { subject: "Study Difficulty", A: careerA.difficultyVal, B: careerB.difficultyVal },
+      { subject: "Creativity Index", A: careerA.creativityVal, B: careerB.creativityVal }
+    ];
   };
 
   const comparisonRows = [
@@ -163,10 +267,10 @@ export default function CareerCompare() {
       {/* Header bar */}
       <div className="text-center md:text-left select-none">
         <h2 className="text-2xl sm:text-3xl font-bold font-display text-white mb-2 flex items-center justify-center md:justify-start gap-2.5">
-          <ArrowLeftRight className="w-6 h-6 text-neon-cyan animate-pulse" /> Side-by-Side Career Comparer
+          <ArrowLeftRight className="w-6 h-6 text-neon-cyan animate-pulse" /> {t.compTitle}
         </h2>
-        <p className="text-slate-400 text-xs sm:text-sm max-w-lg">
-          Evaluate key salaries, stress meters, growth metrics, and study variables for any two futuristic paths instantly.
+        <p className="text-slate-400 text-xs sm:text-sm max-w-lg leading-relaxed">
+          {t.compSubtitle}
         </p>
       </div>
 
@@ -174,7 +278,7 @@ export default function CareerCompare() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 select-none">
         {/* Selector A */}
         <div className="space-y-2">
-          <label className="block text-[10px] text-slate-500 font-mono uppercase tracking-wider">Career Selection A</label>
+          <label className="block text-[10px] text-slate-500 font-mono uppercase tracking-wider">{t.compSelectA}</label>
           <div className="relative">
             <select
               value={careerA.id}
@@ -191,7 +295,7 @@ export default function CareerCompare() {
 
         {/* Selector B */}
         <div className="space-y-2">
-          <label className="block text-[10px] text-slate-500 font-mono uppercase tracking-wider">Career Selection B</label>
+          <label className="block text-[10px] text-slate-500 font-mono uppercase tracking-wider">{t.compSelectB}</label>
           <div className="relative">
             <select
               value={careerB.id}
@@ -207,11 +311,50 @@ export default function CareerCompare() {
         </div>
       </div>
 
+      {/* Visual Chart Comparison Section */}
+      {ssrMounted && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Salary comparative chart */}
+          <Card glowColor="none" className="p-5 h-64 bg-slate-900/60 border border-white/5 relative">
+            <span className="absolute top-2 left-4 text-[9px] font-mono text-slate-500 uppercase tracking-widest">Salary Comparison (In Lakhs)</span>
+            <div className="w-full h-full pt-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={getSalaryProgressionData()}>
+                  <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 8 }} />
+                  <YAxis stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 8 }} />
+                  <Tooltip contentStyle={{ fontSize: 9, background: "#090d16", border: "1px solid rgba(255,255,255,0.15)" }} />
+                  <Legend tick={{ fontSize: 8 }} />
+                  <Bar dataKey={careerA.name} fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey={careerB.name} fill="#22d3ee" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          {/* Metric Comparison radar/bar */}
+          <Card glowColor="none" className="p-5 h-64 bg-slate-900/60 border border-white/5 relative">
+            <span className="absolute top-2 left-4 text-[9px] font-mono text-slate-500 uppercase tracking-widest">Aptitude & Parameter Indexes</span>
+            <div className="w-full h-full pt-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={getComparativeMetricData()} layout="vertical">
+                  <XAxis type="number" stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 8 }} domain={[0, 100]} />
+                  <YAxis type="category" dataKey="subject" stroke="rgba(255,255,255,0.3)" tick={{ fontSize: 8 }} width={80} />
+                  <Tooltip contentStyle={{ fontSize: 9, background: "#090d16", border: "1px solid rgba(255,255,255,0.15)" }} />
+                  <Legend tick={{ fontSize: 8 }} />
+                  <Bar dataKey="A" name={careerA.name.split(" ")[0]} fill="#6366f1" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="B" name={careerB.name.split(" ")[0]} fill="#22d3ee" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Comparison Matrix Table */}
       <Card glowColor="none" className="p-0 border-white/8 shadow-2xl overflow-hidden select-text">
         {/* Table Header Row */}
         <div className="grid grid-cols-3 bg-slate-900/80 border-b border-white/8 px-4 sm:px-6 py-4 font-display font-bold text-xs sm:text-sm text-white select-none">
-          <div className="text-slate-400">Parameter Mapping</div>
+          <div className="text-slate-400">{t.compParamHeader}</div>
           <div className="text-neon-indigo text-center px-1 truncate">{careerA.name}</div>
           <div className="text-neon-cyan text-center px-1 truncate">{careerB.name}</div>
         </div>
@@ -251,7 +394,7 @@ export default function CareerCompare() {
       
       {/* Compare Summary disclaimer */}
       <p className="text-[10px] text-slate-500 leading-relaxed text-center font-normal italic">
-        All comparisons utilize real industry benchmarks and represent high-fidelity models of India and Global ecosystems. Always balance salary potential with your personal happiness and curiosity!
+        {t.compDisclaimer}
       </p>
     </div>
   );

@@ -10,13 +10,18 @@ import {
   TrendingUp, 
   Heart,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Award,
+  BookOpen,
+  DollarSign
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import { useAppState } from "../../context/AppState";
 
 export default function ParentDashboard() {
+  const { t, userProfile } = useAppState();
   const [syncCode, setSyncCode] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -29,18 +34,30 @@ export default function ParentDashboard() {
       setIsLoaded(true);
       setErrorMsg("");
     } else {
-      setErrorMsg("Invalid pairing code pattern. Try entering the code displayed on the Student Dashboard (e.g., FMC-892-Z).");
+      setErrorMsg(
+        userProfile.language === "ml"
+          ? "തെറ്റായ കോഡ് ആണ് നൽകിയത്. ദയവായി സ്റ്റുഡന്റ് ഡാഷ്‌ബോർഡിൽ കാണുന്ന ശരിയായ കോഡ് നൽകുക (ഉദാഹരണത്തിന്: FMC-892-Z)."
+          : "Invalid pairing code pattern. Try entering the code displayed on the Student Dashboard (e.g., FMC-892-Z)."
+      );
     }
   };
 
-  const parentSupportTips = [
+  const parentSupportTipsEN = [
     "Encourage self-learning online: Futuristic careers require building portfolios. Buying an online programming/design course is often more valuable than raw tuition memorization.",
     "Bypass JEE/NEET anxiety: Traditional fields have massive supply gluts, whereas new-age hybrid careers have immense openings and less traditional cramming focus.",
     "Celebrate micro-projects: Ask your child to demonstrate their small vector apps, Python models, or creative sketches. Praising their creation builds immense confidence!"
   ];
 
+  const parentSupportTipsML = [
+    "ഓൺലൈൻ പഠനം പ്രോത്സാഹിപ്പിക്കുക: പുതിയ കരിയറുകൾക്ക് പ്രോജക്റ്റ് പോർട്ട്ഫോളിയോകൾ ആവശ്യമാണ്. പൈത്തൺ/ഡിസൈൻ കോഴ്സുകൾ പരമ്പരാഗത ട്യൂഷനുകളേക്കാൾ പ്രയോജനകരമാണ്.",
+    "JEE/NEET സമ്മർദ്ദം ഒഴിവാക്കൂ: പരമ്പരാഗത മേഖലകളിൽ ഇപ്പോൾ ജോലിസാധ്യത വളരെ കുറവാണ്. പുതിയ ഹൈബ്രിഡ് കോഴ്സുകൾ മികച്ച വരുമാനവും കുറഞ്ഞ മത്സരവും നൽകുന്നു.",
+    "ചെറിയ നേട്ടങ്ങൾ പോലും ആഘോഷിക്കൂ: കുട്ടി നിർമ്മിച്ച ലളിതമായ ആപ്പുകളോ പൈത്തൺ പ്രോഗ്രാമുകളോ കാണിച്ച് തരാൻ പറയുക. ഇത് കുട്ടിയുടെ ആത്മവിശ്വാസം വർദ്ധിപ്പിക്കുന്നു!"
+  ];
+
+  const parentSupportTips = userProfile.language === "ml" ? parentSupportTipsML : parentSupportTipsEN;
+
   return (
-    <div className="max-w-4xl mx-auto py-6 sm:py-8 px-4 space-y-8">
+    <div className="max-w-4xl mx-auto py-6 sm:py-8 px-4 space-y-8 select-none">
       
       {/* Header bar */}
       <div className="text-center select-none">
@@ -48,10 +65,10 @@ export default function ParentDashboard() {
           <Users className="w-6 h-6" />
         </div>
         <h2 className="text-2xl sm:text-4xl font-bold font-display text-white mb-2">
-          Parent & Guardian Portal
+          {t.parentPortalTitle}
         </h2>
         <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
-          Understand your child&apos;s unique technological strengths, matched career stabilities, and practical educational pathways.
+          {t.parentPortalSubtitle}
         </p>
       </div>
 
@@ -66,11 +83,13 @@ export default function ParentDashboard() {
             exit={{ opacity: 0 }}
             className="max-w-md mx-auto"
           >
-            <Card glowColor="rose" className="p-6 sm:p-8">
-              <h3 className="text-base font-bold text-white mb-4">Enter Student Pairing Code</h3>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                Enter the unique code found on your child&apos;s main FindMyCareer Dashboard (e.g., <code className="text-neon-rose font-mono">FMC-742-Z</code>) to securely sync their matching records.
-              </p>
+            <Card glowColor="rose" className="p-6 sm:p-8 space-y-6">
+              <div>
+                <h3 className="text-base font-bold text-white mb-2">{t.parentEnterCode}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed font-normal">
+                  {t.parentPairingDesc}
+                </p>
+              </div>
 
               <form onSubmit={handleSyncSubmit} className="space-y-4">
                 <div className="relative flex items-center">
@@ -85,19 +104,19 @@ export default function ParentDashboard() {
                 </div>
 
                 {errorMsg && (
-                  <p className="text-xs text-neon-rose font-medium leading-relaxed">
+                  <p className="text-xs text-neon-rose font-medium leading-relaxed select-text">
                     {errorMsg}
                   </p>
                 )}
 
-                <Button variant="accent" size="md" type="submit" className="w-full">
-                  Access Student Dashboard
+                <Button variant="accent" size="md" type="submit" className="w-full font-bold">
+                  {t.btnAccessDashboard}
                 </Button>
               </form>
 
-              <div className="mt-8 pt-6 border-t border-white/5 text-[11px] text-slate-500 leading-normal flex gap-2">
+              <div className="pt-6 border-t border-white/5 text-[11px] text-slate-500 leading-normal flex gap-2">
                 <HelpCircle className="w-4 h-4 shrink-0 text-slate-600 mt-0.5" />
-                <span>Pairing tokens link parent views securely and read-only. No settings or bookmarks can be modified.</span>
+                <span>{t.parentSecurityNote}</span>
               </div>
             </Card>
           </motion.div>
@@ -116,13 +135,13 @@ export default function ParentDashboard() {
             <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-400/25 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2 text-emerald-400 font-medium">
                 <CheckCircle2 className="w-4 h-4 shrink-0 animate-pulse" />
-                <span>Successfully synced with student code: {syncCode.toUpperCase()}</span>
+                <span>{t.parentSyncSuccess} {syncCode.toUpperCase()}</span>
               </div>
               <button 
                 onClick={() => { setIsLoaded(false); setSyncCode(""); }} 
-                className="text-slate-400 hover:text-white cursor-pointer select-none underline font-semibold"
+                className="text-slate-400 hover:text-white cursor-pointer select-none underline font-semibold bg-transparent border-0"
               >
-                Disconnect Sync
+                {t.btnDisconnect}
               </button>
             </div>
 
@@ -130,15 +149,16 @@ export default function ParentDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               {/* Career Match Reassurance A */}
-              <Card glowColor="rose" className="p-5 md:col-span-2 space-y-4">
-                <h3 className="text-base font-bold text-white mb-2 flex items-center gap-2">
+              <Card glowColor="rose" className="p-5 md:col-span-2 space-y-4 select-text">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-neon-rose" />
-                  Primary Fit: AI & Prompt Architect
+                  {t.parentFitTitle}: AI & Prompt Architect
                 </h3>
                 
                 <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-                  Your child shows an outstanding aptitude for **logical engineering** and **creative systems organization**. 
-                  Traditional software programming is evolving, and this career represents the safe &lsquo;creator tier&rsquo; where humans command AI platforms.
+                  {userProfile.language === "ml"
+                    ? "നിങ്ങളുടെ കുട്ടിക്ക് ലോജിക്കൽ തിങ്കിംഗിലും ക്രിയേറ്റീവ് ഡിസൈനിലും മികച്ച അഭിരുചിയുണ്ട്. ഭാവിയിൽ കോഡിംഗ് ജോലികൾ മാറുമെങ്കിലും, AI സിസ്റ്റങ്ങളെ നയിക്കുന്ന ഈ കരിയർ കൂടുതൽ സുരക്ഷിതമാണ്."
+                    : "Your child shows an outstanding aptitude for logical engineering and creative systems organization. Traditional software programming is evolving, and this career represents the safe 'creator tier' where humans command AI platforms."}
                 </p>
 
                 <div className="p-4 rounded-xl bg-slate-950 border border-white/5 grid grid-cols-2 gap-4 text-xs">
@@ -147,21 +167,21 @@ export default function ParentDashboard() {
                     <span className="font-bold text-white">₹12 Lakhs / yr</span>
                   </div>
                   <div>
-                    <span className="block text-[9px] text-slate-500 font-mono uppercase">AI Substitution Risk</span>
+                    <span className="block text-[9px] text-slate-500 font-mono uppercase">{t.parentRiskTitle}</span>
                     <span className="font-bold text-emerald-400">Extremely Low (95% Protected)</span>
                   </div>
                 </div>
               </Card>
 
               {/* Education budget forecast sidebar */}
-              <Card glowColor="none" className="p-5 space-y-4">
+              <Card glowColor="none" className="p-5 space-y-4 select-text">
                 <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest">
-                  Financial & Study Path
+                  {t.parentFinanceHeader}
                 </h4>
                 
                 <div className="space-y-3 text-xs leading-normal">
                   <div>
-                    <span className="block text-[9px] text-slate-500 font-mono uppercase">Ideal Degree</span>
+                    <span className="block text-[9px] text-slate-500 font-mono uppercase">{t.parentBudgetIdeal}</span>
                     <span className="font-medium text-white">B.Tech / B.Sc in AI / BCA</span>
                   </div>
                   <div>
@@ -169,7 +189,7 @@ export default function ParentDashboard() {
                     <span className="font-medium text-white">3 to 4 Years</span>
                   </div>
                   <div>
-                    <span className="block text-[9px] text-slate-500 font-mono uppercase">Avg Course Fees</span>
+                    <span className="block text-[9px] text-slate-500 font-mono uppercase">{t.parentBudgetFees}</span>
                     <span className="font-medium text-white">₹3L - ₹8L Total</span>
                   </div>
                 </div>
@@ -181,10 +201,10 @@ export default function ParentDashboard() {
             <Card glowColor="none" className="p-6">
               <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                 <Heart className="w-5 h-5 text-neon-rose fill-neon-rose/25" />
-                Mentor&apos;s Advice: How to Support Your Child
+                {t.parentAdviceTitle}
               </h3>
 
-              <div className="space-y-5">
+              <div className="space-y-5 select-text">
                 {parentSupportTips.map((tip, idx) => (
                   <div key={idx} className="flex gap-4 items-start text-xs leading-relaxed font-normal">
                     <span className="w-5 h-5 rounded-full bg-neon-rose/10 border border-neon-rose/20 text-neon-rose flex items-center justify-center shrink-0 font-mono font-bold text-[10px]">

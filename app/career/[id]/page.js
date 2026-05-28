@@ -17,14 +17,34 @@ import {
   Calendar,
   AlertTriangle,
   Brain,
-  Zap
+  Zap,
+  TrendingDown,
+  Target,
+  ArrowRight,
+  ShieldAlert,
+  Play,
+  Pause
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../../../components/ui/Button";
 import Card from "../../../components/ui/Card";
 import { useAppState } from "../../../context/AppState";
 
-// Client-side career details dictionary matching API
+// Client-side visual chart components for SSR safety
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip
+} from "recharts";
+
 const CAREERS_DETAIL_DB = {
   "biomedical-designer": {
     id: "biomedical-designer",
@@ -68,6 +88,11 @@ const CAREERS_DETAIL_DB = {
       { name: "Embedded Systems", level: 85, owned: 30 },
       { name: "Data Analysis", level: 80, owned: 60 },
       { name: "3D Prototyping", level: 75, owned: 20 }
+    ],
+    hiddenTalents: [
+      "Micro-mechanical alignment accuracy",
+      "Biological-systems integration vision",
+      "Multi-domain compliance auditing"
     ]
   },
   "quantum-bioinformatics": {
@@ -112,6 +137,11 @@ const CAREERS_DETAIL_DB = {
       { name: "Molecular Genomics", level: 90, owned: 40 },
       { name: "Python & Qiskit", level: 85, owned: 50 },
       { name: "Statistics", level: 80, owned: 55 }
+    ],
+    hiddenTalents: [
+      "Multi-dimensional pattern matching",
+      "Quantum sequence compilation",
+      "Biological simulator modeling"
     ]
   },
   "ai-engineer": {
@@ -156,6 +186,11 @@ const CAREERS_DETAIL_DB = {
       { name: "Neural Networks", level: 85, owned: 25 },
       { name: "API Integrations", level: 80, owned: 40 },
       { name: "Systems Design", level: 75, owned: 30 }
+    ],
+    hiddenTalents: [
+      "Cognitive pipeline logic tracking",
+      "Vector embedding math fluency",
+      "AI model temperature calibration"
     ]
   },
   "cybersecurity-guardian": {
@@ -200,6 +235,11 @@ const CAREERS_DETAIL_DB = {
       { name: "Threat Analysis", level: 85, owned: 35 },
       { name: "AI Detection Models", level: 80, owned: 20 },
       { name: "Network Routing", level: 75, owned: 45 }
+    ],
+    hiddenTalents: [
+      "Penetration loop discovery speed",
+      "Hacker-psychology profiling",
+      "Network grid visualization"
     ]
   },
   "fintech-analyst": {
@@ -244,6 +284,11 @@ const CAREERS_DETAIL_DB = {
       { name: "Python / Data Tools", level: 80, owned: 30 },
       { name: "Strategic Economics", level: 85, owned: 60 },
       { name: "Banking Regulations", level: 75, owned: 45 }
+    ],
+    hiddenTalents: [
+      "DeFi arbitrage pattern matching",
+      "Risk metric mathematical fluency",
+      "Financial trend macro auditing"
     ]
   },
   "product-manager": {
@@ -288,6 +333,11 @@ const CAREERS_DETAIL_DB = {
       { name: "Market Analytics", level: 85, owned: 50 },
       { name: "UX Wireframing", level: 80, owned: 35 },
       { name: "Team Leadership", level: 95, owned: 60 }
+    ],
+    hiddenTalents: [
+      "User-friction points visualization",
+      "Tech-translation communications",
+      "Sprint loop resource management"
     ]
   },
   "holographic-designer": {
@@ -332,6 +382,11 @@ const CAREERS_DETAIL_DB = {
       { name: "Spatial UX Design", level: 90, owned: 45 },
       { name: "Visual Aesthetics", level: 85, owned: 70 },
       { name: "Color Theory", level: 80, owned: 75 }
+    ],
+    hiddenTalents: [
+      "Overlapping spatial field planning",
+      "Sensory micro-interaction mapping",
+      "Dynamic volumetric lighting color theory"
     ]
   },
   "ai-ethical-advisor": {
@@ -376,6 +431,11 @@ const CAREERS_DETAIL_DB = {
       { name: "Creative Writing", level: 90, owned: 75 },
       { name: "Sociological Analysis", level: 85, owned: 60 },
       { name: "AI Core Understanding", level: 75, owned: 25 }
+    ],
+    hiddenTalents: [
+      "Multi-demographic semantic analysis",
+      "Philosophical dilemma synthesis",
+      "AI persona semantic tuning"
     ]
   },
   "space-architect": {
@@ -420,6 +480,11 @@ const CAREERS_DETAIL_DB = {
       { name: "Sustainable Design", level: 80, owned: 35 },
       { name: "Technical Drawing", level: 75, owned: 45 },
       { name: "Collaboration", level: 90, owned: 55 }
+    ],
+    hiddenTalents: [
+      "Volumetric design mapping",
+      "Smart-city system spatial logic",
+      "Resource-efficiency auditing"
     ]
   }
 };
@@ -427,26 +492,79 @@ const CAREERS_DETAIL_DB = {
 export default function CareerDetails() {
   const params = useParams();
   const router = useRouter();
-  const { bookmarks, toggleBookmark } = useAppState();
+  const { bookmarks, toggleBookmark, t } = useAppState();
   
   const careerId = params?.id || "space-architect";
   const career = CAREERS_DETAIL_DB[careerId] || CAREERS_DETAIL_DB["space-architect"];
   
   const [activeTab, setActiveTab] = useState("roadmap"); // "roadmap", "lifestyle", "dayInLife", "skills"
   const [salaryGeo, setSalaryGeo] = useState("india"); // "india" or "global"
-  const [salaryScale, setSalaryScale] = useState(30); // slider percent
+  const [salaryScale, setSalaryScale] = useState(30); // slider percent 0 to 100
+  const [ssrMounted, setSsrMounted] = useState(false);
+
+  const [oneDayIndex, setOneDayIndex] = useState(0); // active task index in simulator
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    setSsrMounted(true);
+  }, []);
+
+  // One Day In Life Simulator Playback Effect
+  useEffect(() => {
+    let interval;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setOneDayIndex(prev => (prev + 1) % career.dayInLife.length);
+      }, 2500);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, career.dayInLife.length]);
 
   const isBookmarked = bookmarks.includes(career.id);
 
   const tabs = [
-    { id: "roadmap", name: "Career Timeline", icon: Calendar },
-    { id: "lifestyle", name: "Lifestyle Sim", icon: MapPin },
-    { id: "dayInLife", name: "One Day Simulator", icon: Clock },
-    { id: "skills", name: "Skill Gap Analyzer", icon: Brain }
+    { id: "roadmap", name: t.carTabRoadmap, icon: Calendar },
+    { id: "lifestyle", name: t.carTabLifestyle, icon: MapPin },
+    { id: "dayInLife", name: t.carTabDayInLife, icon: Clock },
+    { id: "skills", name: t.carTabSkills, icon: Brain }
   ];
 
+  // Derive dynamic salary based on scale
+  const deriveSalaryProgressData = () => {
+    const startingVal = parseInt(career.salaryIndia.match(/\d+/)?.[0] || "8");
+    const finalVal = parseInt(career.salaryIndia.split("-")?.[1]?.match(/\d+/)?.[0] || "28");
+    const baseVal = salaryGeo === "india" ? startingVal : startingVal * 10;
+    const peakVal = salaryGeo === "india" ? finalVal : finalVal * 10;
+
+    const scaleFraction = salaryScale / 100;
+    const activeSalary = Math.floor(baseVal + (peakVal - baseVal) * scaleFraction);
+
+    const currencySymbol = salaryGeo === "india" ? "₹" : "$";
+    const suffix = salaryGeo === "india" ? "L / yr" : "k / yr";
+
+    const curveData = [
+      { year: "Entry", salary: baseVal },
+      { year: "3 Years", salary: Math.floor(baseVal + (peakVal - baseVal) * 0.3) },
+      { year: "5 Years", salary: Math.floor(baseVal + (peakVal - baseVal) * 0.6) },
+      { year: "10 Years", salary: peakVal }
+    ];
+
+    return { activeSalary: `${currencySymbol}${activeSalary}${suffix}`, curveData };
+  };
+
+  const { activeSalary, curveData } = deriveSalaryProgressData();
+
+  // Skill Mapping for Radar
+  const radarData = career.skills.map(s => ({
+    subject: s.name,
+    Owned: s.owned,
+    Required: s.level,
+    fullMark: 100
+  }));
+
   return (
-    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4">
+    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 select-none">
+      
       {/* Back button and Bookmarks action */}
       <div className="flex justify-between items-center mb-8">
         <Button 
@@ -454,9 +572,9 @@ export default function CareerDetails() {
           size="sm" 
           icon={ArrowLeft}
           onClick={() => router.back()}
-          className="text-slate-400"
+          className="text-slate-400 font-semibold"
         >
-          Back
+          {t.btnPrevious}
         </Button>
 
         <Button
@@ -464,9 +582,9 @@ export default function CareerDetails() {
           size="sm"
           icon={isBookmarked ? BookmarkCheck : Bookmark}
           onClick={() => toggleBookmark(career.id)}
-          className={isBookmarked ? "text-slate-950" : "text-slate-300"}
+          className={isBookmarked ? "text-slate-950 font-bold" : "text-slate-300 font-semibold"}
         >
-          {isBookmarked ? "Bookmarked!" : "Bookmark Career"}
+          {isBookmarked ? "Bookmarked!" : t.navBookmarks}
         </Button>
       </div>
 
@@ -477,8 +595,8 @@ export default function CareerDetails() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6">
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-3">
-              <span className="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neon-indigo/20 border border-neon-indigo/30 text-neon-indigo uppercase">
-                India + Global Path
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-neon-indigo/20 border border-neon-indigo/30 text-neon-indigo uppercase">
+                {t.carPath}
               </span>
               <span className="text-xs text-emerald-400 font-mono flex items-center gap-1 font-semibold">
                 <Flame className="w-3.5 h-3.5 fill-emerald-500/25" /> {career.demand}
@@ -491,18 +609,18 @@ export default function CareerDetails() {
 
           <div className="flex items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-white/5 shadow-inner shrink-0 w-full md:w-auto justify-between md:justify-start">
             <div>
-              <p className="text-[10px] text-slate-500 font-mono uppercase">AI Threat Shield</p>
+              <p className="text-[10px] text-slate-500 font-mono uppercase">{t.carAiShield}</p>
               <p className="text-sm font-bold text-emerald-400">{career.aiSafety}</p>
             </div>
             <div className="h-8 w-[1px] bg-white/10 mx-2" />
             <div>
-              <p className="text-[10px] text-slate-500 font-mono uppercase">Avg Match</p>
-              <p className="text-sm font-bold text-neon-cyan">{career.match}% Match</p>
+              <p className="text-[10px] text-slate-500 font-mono uppercase">{t.carAvgMatch}</p>
+              <p className="text-sm font-bold text-neon-cyan">{career.match}%</p>
             </div>
           </div>
         </div>
 
-        <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-4xl">
+        <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-4xl select-text">
           {career.whyItFits}
         </p>
       </div>
@@ -547,36 +665,36 @@ export default function CareerDetails() {
                 <Card glowColor="indigo" className="p-6">
                   <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-neon-indigo" />
-                    Study Roadmap After Plus Two
+                    {t.carColleges}
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                     <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5">
-                      <span className="block text-[10px] text-slate-500 font-mono uppercase mb-1">Study Duration</span>
-                      <span className="text-sm font-bold text-white">{career.studyYears} Years Degree</span>
+                      <span className="block text-[10px] text-slate-500 font-mono uppercase mb-1">{t.carStudyDuration}</span>
+                      <span className="text-sm font-bold text-white">{career.studyYears} Years {t.carDegree}</span>
                     </div>
                     <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5">
-                      <span className="block text-[10px] text-slate-500 font-mono uppercase mb-1">Target Entrances</span>
+                      <span className="block text-[10px] text-slate-500 font-mono uppercase mb-1">{t.carExams}</span>
                       <span className="text-sm font-bold text-neon-cyan">{career.exams}</span>
                     </div>
                   </div>
 
                   <div className="p-4 rounded-xl bg-slate-900/40 border border-white/5 mb-8">
-                    <span className="block text-[10px] text-slate-500 font-mono uppercase mb-1">Recommended Colleges</span>
+                    <span className="block text-[10px] text-slate-500 font-mono uppercase mb-1">{t.carColleges}</span>
                     <p className="text-sm font-bold text-slate-300 leading-relaxed">{career.colleges}</p>
                   </div>
 
                   <h4 className="text-sm font-mono font-bold text-slate-400 mb-6 uppercase tracking-wider">
-                    Visual Age Timeline
+                    {t.carAgeTimeline}
                   </h4>
 
                   {/* Vertical Timeline */}
-                  <div className="relative pl-6 border-l border-white/10 space-y-8">
+                  <div className="relative pl-6 border-l border-white/10 space-y-8 select-text">
                     {career.timeline.map((step, idx) => (
                       <div key={idx} className="relative">
                         <div className="absolute -left-[31px] top-0.5 w-4 h-4 rounded-full bg-slate-950 border-2 border-neon-indigo flex items-center justify-center shadow-[0_0_8px_#6366f1]" />
                         <span className="inline-block px-2 py-0.5 rounded bg-neon-indigo/20 text-neon-indigo text-[10px] font-mono font-bold mb-2">
-                          Age {step.age}
+                          {t.carAge} {step.age}
                         </span>
                         <p className="text-sm text-slate-300 leading-relaxed font-medium">
                           {step.phase}
@@ -598,27 +716,27 @@ export default function CareerDetails() {
                 className="grid grid-cols-1 sm:grid-cols-2 gap-6"
               >
                 <Card glowColor="cyan" className="p-5">
-                  <span className="text-xs text-neon-cyan font-mono font-bold block mb-1">FUTURE ENVIRONMENT</span>
-                  <h4 className="text-lg font-bold text-white mb-3">Workplace Style</h4>
+                  <span className="text-xs text-neon-cyan font-mono font-bold block mb-1">{t.carFutureEnv}</span>
+                  <h4 className="text-lg font-bold text-white mb-3">{t.carWorkspaceStyle}</h4>
                   <p className="text-xs text-slate-400 leading-relaxed">{career.lifestyle.workspace}</p>
                 </Card>
 
                 <Card glowColor="rose" className="p-5">
-                  <span className="text-xs text-neon-rose font-mono font-bold block mb-1">WORKSTYLE TYPE</span>
-                  <h4 className="text-lg font-bold text-white mb-3">Daily Commute</h4>
+                  <span className="text-xs text-neon-rose font-mono font-bold block mb-1">{t.carWorkstyleType}</span>
+                  <h4 className="text-lg font-bold text-white mb-3">{t.carCommute}</h4>
                   <p className="text-xs text-slate-400 leading-relaxed">{career.lifestyle.commute}</p>
                 </Card>
 
                 <Card glowColor="none" className="p-5 sm:col-span-2">
-                  <span className="text-xs text-slate-500 font-mono font-bold block mb-1">LIFESTYLE EXPECTATIONS</span>
-                  <h4 className="text-lg font-bold text-white mb-3">Future Vibe & Pace</h4>
-                  <div className="space-y-4 text-xs">
+                  <span className="text-xs text-slate-500 font-mono font-bold block mb-1">{t.carExpectations}</span>
+                  <h4 className="text-lg font-bold text-white mb-3">{t.carVibe}</h4>
+                  <div className="space-y-4 text-xs select-text">
                     <div>
-                      <span className="block text-[10px] text-slate-500 font-mono uppercase">Vibe</span>
+                      <span className="block text-[10px] text-slate-500 font-mono uppercase">{t.carVibeLabel}</span>
                       <p className="text-slate-300 mt-0.5">{career.lifestyle.lifestyle}</p>
                     </div>
                     <div>
-                      <span className="block text-[10px] text-slate-500 font-mono uppercase">Expected Workload</span>
+                      <span className="block text-[10px] text-slate-500 font-mono uppercase">{t.carWorkload}</span>
                       <p className="text-slate-300 mt-0.5">{career.lifestyle.workload}</p>
                     </div>
                   </div>
@@ -626,7 +744,7 @@ export default function CareerDetails() {
               </motion.div>
             )}
 
-            {/* TAB: Day In Life */}
+            {/* TAB: Day In Life Simulator */}
             {activeTab === "dayInLife" && (
               <motion.div
                 key="dayInLife"
@@ -634,27 +752,75 @@ export default function CareerDetails() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
               >
-                <Card glowColor="rose" className="p-6">
-                  <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-neon-rose" />
-                    One Day In This Career (Simulation)
-                  </h3>
+                <Card glowColor="rose" className="p-6 space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-neon-rose" />
+                        {t.carDayTitle}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {t.carDayDesc}
+                      </p>
+                    </div>
+                    
+                    {/* Play/Pause controls */}
+                    <button
+                      onClick={() => setIsPlaying(prev => !prev)}
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors border ${
+                        isPlaying 
+                          ? "bg-neon-rose/10 border-neon-rose/30 text-neon-rose shadow-[0_0_10px_rgba(244,63,94,0.2)]" 
+                          : "bg-slate-900 border-white/10 text-slate-300 hover:text-white"
+                      }`}
+                    >
+                      {isPlaying ? <Pause className="w-4 h-4 fill-neon-rose" /> : <Play className="w-4 h-4 fill-slate-300 ml-0.5" />}
+                    </button>
+                  </div>
 
-                  <p className="text-xs text-slate-400 mb-8 leading-relaxed">
-                    Check out this hour-by-hour diary to see what your typical working day could look like.
-                  </p>
+                  {/* Simulator Box */}
+                  <div className="p-6 rounded-2xl bg-slate-950/80 border border-white/5 flex flex-col sm:flex-row items-center gap-6 shadow-inner relative overflow-hidden select-text">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-neon-rose/5 rounded-full blur-2xl pointer-events-none" />
+                    
+                    {/* Visual Mock device */}
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-neon-rose/20 to-neon-violet/10 border border-neon-rose/25 flex flex-col items-center justify-center shrink-0 shadow-lg text-center">
+                      <span className="text-xs font-mono font-bold text-neon-rose leading-tight">
+                        {career.dayInLife[oneDayIndex].time.split(" ")[0]}
+                      </span>
+                      <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest leading-none mt-1">
+                        {career.dayInLife[oneDayIndex].time.split(" ")[1]}
+                      </span>
+                    </div>
 
-                  <div className="space-y-6 relative pl-4 border-l border-white/5">
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-mono font-bold text-neon-rose uppercase tracking-widest">
+                        Active Simulation Schedule
+                      </span>
+                      <p className="text-base font-bold text-white">
+                        {career.dayInLife[oneDayIndex].task}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {oneDayIndex === 0 && "Kickstarting operations, synchronizing databases, reviewing biometric nodes."}
+                        {oneDayIndex === 1 && "Aligning project limits, consulting surgeon groups, planning device configurations."}
+                        {oneDayIndex === 2 && "Compiling CAD boards, drafting physical structures, modeling sensor casing grids."}
+                        {oneDayIndex === 3 && "Structuring compliance sheets, compiling logs, signing research protocols."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Manual Step Sliders */}
+                  <div className="grid grid-cols-4 gap-2 pt-2">
                     {career.dayInLife.map((slot, idx) => (
-                      <div key={idx} className="relative flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                        <div className="absolute -left-[21px] w-2.5 h-2.5 rounded-full bg-neon-rose shadow-[0_0_8px_#f43f5e]" />
-                        <span className="text-xs font-mono font-bold text-neon-rose shrink-0">
-                          {slot.time}
-                        </span>
-                        <p className="text-sm text-slate-300 font-medium">
-                          {slot.task}
-                        </p>
-                      </div>
+                      <button
+                        key={idx}
+                        onClick={() => { setOneDayIndex(idx); setIsPlaying(false); }}
+                        className={`py-3 rounded-xl border text-center font-mono text-[9px] font-bold cursor-pointer transition-all select-none ${
+                          oneDayIndex === idx 
+                            ? "bg-neon-rose/10 border-neon-rose/40 text-white shadow-[0_0_10px_rgba(244,63,94,0.15)]" 
+                            : "bg-slate-900/60 border-white/5 text-slate-500 hover:text-slate-300"
+                        }`}
+                      >
+                        {slot.time}
+                      </button>
                     ))}
                   </div>
                 </Card>
@@ -670,48 +836,38 @@ export default function CareerDetails() {
                 exit={{ opacity: 0 }}
                 className="space-y-6"
               >
-                <Card glowColor="indigo" className="p-6">
-                  <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-neon-indigo" />
-                    Skill Gap Analyzer
-                  </h3>
-                  <p className="text-xs text-slate-400 mb-8 leading-relaxed">
-                    This chart maps the primary skills you currently own (based on interests) vs the level this career requires.
-                  </p>
-
-                  <div className="space-y-6">
-                    {career.skills.map((skill, idx) => (
-                      <div key={idx} className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-semibold text-white">{skill.name}</span>
-                          <span className="font-mono text-slate-400">
-                            Owned: {skill.owned}% / Need: {skill.level}%
-                          </span>
-                        </div>
-                        
-                        {/* Interactive stacked progress bar */}
-                        <div className="h-2.5 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5 relative">
-                          {/* Needed bar */}
-                          <div 
-                            className="absolute top-0 bottom-0 left-0 bg-white/10" 
-                            style={{ width: `${skill.level}%` }}
-                          />
-                          {/* Owned bar */}
-                          <div 
-                            className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-neon-indigo to-neon-cyan" 
-                            style={{ width: `${skill.owned}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                <Card glowColor="indigo" className="p-6 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Brain className="w-5 h-5 text-neon-indigo" />
+                      {t.carSkillTitle}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {t.carSkillDesc}
+                    </p>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5 mt-8">
+                  {/* Recharts Radar Chart */}
+                  {ssrMounted && (
+                    <div className="w-full h-64 bg-slate-950/60 p-2 rounded-2xl border border-white/5 shadow-inner">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                          <PolarGrid stroke="rgba(255,255,255,0.08)" />
+                          <PolarAngleAxis dataKey="subject" stroke="rgba(255,255,255,0.6)" tick={{ fontSize: 9 }} />
+                          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 8 }} stroke="rgba(255,255,255,0.15)" />
+                          <Radar name="Owned Level" dataKey="Owned" stroke="#6366f1" fill="#6366f1" fillOpacity={0.25} />
+                          <Radar name="Required Level" dataKey="Required" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.15} />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5 select-text">
                     <span className="text-xs font-mono font-bold text-neon-cyan block mb-1">
-                      AI Gap Improvement Plan
+                      {t.carSkillImprovePlan}
                     </span>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Begin learning Python, Blender, or Finance models online today. Focus on building projects rather than just reading articles. We have mapped recommended resources in your Dashboard!
+                      {t.carSkillImproveDesc}
                     </p>
                   </div>
                 </Card>
@@ -721,24 +877,24 @@ export default function CareerDetails() {
           </AnimatePresence>
         </div>
 
-        {/* Right Sidebar (Salaries, Reality Checks & Competitions) */}
+        {/* Right Sidebar (Salaries, Hidden Talents, Reality Checks) */}
         <div className="space-y-6">
-          {/* Salary visualizer */}
-          <Card glowColor="cyan" className="p-6">
-            <h3 className="text-base font-bold text-white mb-6 flex items-center justify-between">
-              <span>Salary Benchmark</span>
-              <span className="text-xs font-mono text-neon-cyan uppercase">Average</span>
+          {/* Salary visualizer Area Chart */}
+          <Card glowColor="cyan" className="p-6 space-y-6">
+            <h3 className="text-base font-bold text-white flex items-center justify-between">
+              <span>{t.carSalaryBenchmark}</span>
+              <span className="text-xs font-mono text-neon-cyan uppercase">{t.carSalaryAverage}</span>
             </h3>
 
             {/* Toggle geography */}
-            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-950 border border-white/5 mb-6">
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-950 border border-white/5 select-none">
               <button
                 onClick={() => setSalaryGeo("india")}
                 className={`py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
                   salaryGeo === "india" ? "bg-white/5 text-white" : "text-slate-500"
                 }`}
               >
-                India Salaries
+                {t.carSalaryIndia}
               </button>
               <button
                 onClick={() => setSalaryGeo("global")}
@@ -746,22 +902,36 @@ export default function CareerDetails() {
                   salaryGeo === "global" ? "bg-white/5 text-white" : "text-slate-500"
                 }`}
               >
-                Global Salaries
+                {t.carSalaryGlobal}
               </button>
             </div>
 
-            <div className="text-center mb-6">
-              <p className="text-[10px] text-slate-500 font-mono uppercase mb-1">Expected Salary Range</p>
-              <p className="text-xl sm:text-2xl font-extrabold text-white">
-                {salaryGeo === "india" ? career.salaryIndia : career.salaryGlobal}
+            <div className="text-center bg-slate-950/80 p-4 rounded-2xl border border-white/5 shadow-inner select-text">
+              <p className="text-[10px] text-slate-500 font-mono uppercase mb-1">{t.carSalaryRange}</p>
+              <p className="text-2xl font-extrabold text-white">
+                {activeSalary}
               </p>
+              <p className="text-[9px] text-neon-cyan font-mono mt-1">Based on Experience Slider</p>
             </div>
 
-            {/* Interactive slider simulating career years vs salary increase */}
-            <div className="space-y-2 mb-4">
+            {/* Recharts Area Curve representation */}
+            {ssrMounted && (
+              <div className="w-full h-24 bg-slate-950/40 rounded-xl border border-white/5 p-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={curveData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <XAxis dataKey="year" stroke="rgba(255,255,255,0.2)" tick={{ fontSize: 7 }} />
+                    <YAxis stroke="rgba(255,255,255,0.2)" tick={{ fontSize: 7 }} />
+                    <Area type="monotone" dataKey="salary" stroke="#22d3ee" fill="rgba(34,211,238,0.08)" strokeWidth={1.5} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Slider */}
+            <div className="space-y-2 select-none">
               <div className="flex justify-between items-center text-[10px] font-mono text-slate-500">
                 <span>Entry Level</span>
-                <span>Expert Level</span>
+                <span>Expert Level ({salaryScale}%)</span>
               </div>
               <input
                 type="range"
@@ -773,33 +943,54 @@ export default function CareerDetails() {
               />
             </div>
 
-            <p className="text-[10px] text-slate-400 text-center leading-relaxed italic">
-              Estimated salary starts at base level and expands up to 4x based on expert skills and tech leadership!
+            <p className="text-[9px] text-slate-500 text-center leading-relaxed italic font-normal">
+              {t.carSalarySliderInfo}
             </p>
+          </Card>
+
+          {/* Hidden Talent Detector */}
+          <Card glowColor="indigo" className="p-6 space-y-4">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Brain className="w-5 h-5 text-neon-indigo animate-pulse" />
+              Hidden Talent Detector
+            </h3>
+            
+            <p className="text-xs text-slate-400 leading-normal">
+              Based on your unique diagnostic matrix, our AI has extracted 3 highly specialized strengths required for this path:
+            </p>
+
+            <div className="space-y-3 font-medium text-xs select-text">
+              {career.hiddenTalents?.map((talent, idx) => (
+                <div key={idx} className="flex gap-2.5 items-start bg-slate-950/60 p-2.5 rounded-xl border border-white/5 hover:border-neon-indigo/25 transition-colors">
+                  <Target className="w-4 h-4 text-neon-indigo shrink-0 mt-0.5" />
+                  <span className="text-slate-300">{talent}</span>
+                </div>
+              ))}
+            </div>
           </Card>
 
           {/* Career Reality Check */}
           <Card glowColor="rose" className="p-6">
             <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-neon-rose animate-pulse" />
-              Career Reality Check
+              {t.carRealityCheck}
             </h3>
 
             <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-              We keep it 100% real. Every career has stress points, high competition, and entry challenges.
+              {t.carRealityDesc}
             </p>
 
-            <div className="space-y-4 text-xs">
+            <div className="space-y-4 text-xs select-text">
               <div className="p-3 rounded-lg bg-slate-950 border border-white/5">
-                <span className="block text-[10px] text-neon-rose font-mono uppercase mb-1">Exam Competition</span>
+                <span className="block text-[10px] text-neon-rose font-mono uppercase mb-1">{t.carRealityExam}</span>
                 <p className="text-slate-300 leading-normal">{career.reality.competition}</p>
               </div>
               <div className="p-3 rounded-lg bg-slate-950 border border-white/5">
-                <span className="block text-[10px] text-neon-rose font-mono uppercase mb-1">Real-world Stress</span>
+                <span className="block text-[10px] text-neon-rose font-mono uppercase mb-1">{t.carRealityStress}</span>
                 <p className="text-slate-300 leading-normal">{career.reality.stress}</p>
               </div>
               <div className="p-3 rounded-lg bg-slate-950 border border-white/5">
-                <span className="block text-[10px] text-neon-rose font-mono uppercase mb-1">Core Challenge</span>
+                <span className="block text-[10px] text-neon-rose font-mono uppercase mb-1">{t.carRealityChallenge}</span>
                 <p className="text-slate-300 leading-normal">{career.reality.challenges}</p>
               </div>
             </div>

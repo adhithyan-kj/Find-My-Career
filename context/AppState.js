@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { TRANSLATIONS } from "./Translations";
 
 const AppStateContext = createContext();
 
@@ -147,6 +148,8 @@ export function AppStateProvider({ children }) {
     });
   };
 
+  const t = TRANSLATIONS[userProfile.language || "en"] || TRANSLATIONS.en;
+
   return (
     <AppStateContext.Provider
       value={{
@@ -160,6 +163,7 @@ export function AppStateProvider({ children }) {
         addXp,
         saveReport,
         claimBadge,
+        t,
       }}
     >
       {children}

@@ -14,28 +14,30 @@ import {
   Info, 
   Mail,
   Zap,
-  Flame
+  Flame,
+  TrendingUp
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAppState } from "../context/AppState";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { streak } = useAppState();
+  const { streak, t } = useAppState();
 
   const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Discovery", href: "/discovery", icon: Compass },
-    { name: "AI Mentor", href: "/mentor", icon: MessageSquare },
-    { name: "Compare", href: "/compare", icon: ArrowLeftRight },
-    { name: "Bookmarks", href: "/saved", icon: Bookmark },
-    { name: "Profile", href: "/profile", icon: User },
-    { name: "Parents", href: "/parent", icon: Users },
+    { name: t.navDashboard, href: "/dashboard", icon: LayoutDashboard },
+    { name: t.navDiscovery, href: "/discovery", icon: Compass },
+    { name: t.navMentor, href: "/mentor", icon: MessageSquare },
+    { name: t.navScope, href: "/scope", icon: TrendingUp },
+    { name: t.navCompare, href: "/compare", icon: ArrowLeftRight },
+    { name: t.navBookmarks, href: "/saved", icon: Bookmark },
+    { name: t.navProfile, href: "/profile", icon: User },
+    { name: t.navParents, href: "/parent", icon: Users },
   ];
 
   const secondaryNavItems = [
-    { name: "About", href: "/about", icon: Info },
-    { name: "Contact", href: "/contact", icon: Mail },
+    { name: t.navAbout, href: "/about", icon: Info },
+    { name: t.navContact, href: "/contact", icon: Mail },
   ];
 
   const isActive = (href) => {
@@ -137,7 +139,7 @@ export default function Navbar() {
 
       {/* Mobile Floating Bottom Navigation Bar */}
       <div className="md:hidden fixed bottom-4 left-4 right-4 h-16 glass-panel rounded-2xl border border-white/10 z-40 px-3 flex items-center justify-around shadow-2xl">
-        {navItems.filter(item => ["Dashboard", "Discovery", "AI Mentor", "Compare", "Profile"].includes(item.name)).map((item) => {
+        {navItems.filter(item => ["/dashboard", "/discovery", "/mentor", "/scope", "/profile"].includes(item.href)).map((item) => {
           const active = isActive(item.href);
           return (
             <Link key={item.name} href={item.href} className="relative flex flex-col items-center justify-center w-12 h-12">
@@ -153,7 +155,7 @@ export default function Navbar() {
               <span className={`text-[9px] mt-1 font-medium select-none ${
                 active ? "text-neon-cyan font-bold" : "text-slate-500"
               }`}>
-                {item.name === "AI Mentor" ? "Mentor" : item.name}
+                {item.href === "/mentor" ? (t.navMentor?.split(" ")?.[1] || "Mentor") : item.name}
               </span>
             </Link>
           );
